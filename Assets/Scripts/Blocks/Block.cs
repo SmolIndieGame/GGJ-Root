@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Block : MonoBehaviour, IClickHandler
 {
-    [SerializeField] new SpriteRenderer renderer;
+    [SerializeField] SpriteRenderer spriteRenderer;
 
     [SerializeField] Color clickedColor;
     [SerializeField] Color usedColor;
@@ -13,7 +13,7 @@ public class Block : MonoBehaviour, IClickHandler
 
     public void Setup(Color color, Vector2Int location)
     {
-        renderer.color = color;
+        spriteRenderer.color = color;
         this.location = location;
         transform.position = (Vector2)location;
     }
@@ -23,6 +23,6 @@ public class Block : MonoBehaviour, IClickHandler
         BlockGrid.Click(location);
     }
 
-    public void SetToCurrent() => renderer.color = clickedColor;
-    public void SetToUsed() => renderer.color = usedColor;
+    public void SetToCurrent() => spriteRenderer.color = clickedColor;
+    public void SetToUsed() => spriteRenderer.color = usedColor;
 }
