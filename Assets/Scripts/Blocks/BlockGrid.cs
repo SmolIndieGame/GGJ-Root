@@ -3,9 +3,41 @@ using UnityEngine;
 
 public class BlockInfo
 {
-    public Vector2Int location;
-    public BlockType blockType;
-    public Block block;
+    public readonly Vector2Int location;
+    readonly VisualBlock block;
+    BlockType blockType;
+    PlayerNode treeNode;
+
+    public BlockInfo(Vector2Int location, BlockType blockType, VisualBlock block)
+    {
+        this.location = location;
+        this.blockType = blockType;
+        this.block = block;
+        treeNode = null;
+
+        block.UpdateBlockType(blockType);
+    }
+
+    public BlockType BlockType
+    {
+        get => blockType;
+        set
+        {
+            blockType = value;
+            block.UpdateBlockType(blockType);
+        }
+    }
+
+    public PlayerNode TreeNode => treeNode;
+
+    public void SetPlayerNode(PlayerNode node)
+    {
+        if (treeNode == node)
+            return;
+        treeNode = node;
+        if (node != null)
+            block.ChangeAlliance(node.Tree.alliance);
+    }
 }
 
 public enum BlockType
@@ -13,27 +45,31 @@ public enum BlockType
     Dirt,
     Rock,
     Water,
-    Root
+    Twig,
+    Leaf,
+    DeadTwig
 }
 
 public static class BlockGrid
 {
-    static readonly Dictionary<Vector2Int, BlockInfo> blocks;
-    static BlockInfo currentBlock;
+    static readonly Dictionary<Vector2Int, BlockInfo> blocks = new();
 
-    // TODO: please change
-    public static int score { get; private set; }
+    static BlockGenerator generator;
 
-    static BlockGrid()
+    public static void Init(BlockGenerator generator)
     {
-        score = 10;
-        blocks = new();
-        BlockGenerator.I.GenerateBlock(Vector2Int.zero);
-        SetCurrent(blocks[Vector2Int.zero]);
-        GenerateAround(Vector2Int.zero);
-    }
+        BlockGrid.generator = generator;
+        //for (int i = 0; i < 18; i++)
+        //{
+        //    for (int j = 0; j < 30; j++)
+        //    {
+        //        generator.GenerateBlock(new Vector2Int(i, -j));
+        //    }
+        //}
 
-    public static void Init() { }
+        //PlayerController.Init();
+        //GenerateAround(Vector2Int.zero);
+    }
 
     public static void Add(Vector2Int location, BlockInfo info)
     {
@@ -47,49 +83,39 @@ public static class BlockGrid
         return blocks.TryGetValue(location, out info);
     }
 
-    public static void Click(Vector2Int location)
+    public static BlockType GetType(Vector2Int loc) => blocks[loc].BlockType;
+    public static PlayerNode GetTreeNode(Vector2Int loc) => blocks[loc].TreeNode;
+    public static void SetTwigToLeaf(Vector2Int loc)
     {
-        var delta = location - currentBlock.location;
-        if (delta.y > 0 || Mathf.Abs(delta.x) + Mathf.Abs(delta.y) != 1)
-            return;
-        var target = blocks[location];
-        switch (target.blockType)
-        {
-            case BlockType.Dirt:
-                score -= 1;
-                break;
-            case BlockType.Rock:
-                score -= 3;
-                break;
-            case BlockType.Water:
-                score += 6;
-                break;
-            case BlockType.Root:
-            default:
-                return;
-        }
-        GenerateAround(location);
-        SetCurrent(target);
+        BlockInfo info = blocks[loc];
+        if (info.BlockType == BlockType.Twig)
+            info.BlockType = BlockType.Leaf;
+    }
+    public static void SetLeafToTwig(Vector2Int loc)
+    {
+        BlockInfo info = blocks[loc];
+        if (info.BlockType == BlockType.Leaf)
+            info.BlockType = BlockType.Twig;
+    }
+    public static void SetTreeBlockToDirt(Vector2Int loc)
+    {
+        BlockInfo info = blocks[loc];
+        info.SetPlayerNode(null);
+        if (info.BlockType == BlockType.Leaf || info.BlockType == BlockType.Twig)
+            info.BlockType = BlockType.Dirt;
+    }
+    public static void ExtendLeaf(Vector2Int from, Vector2Int to, PlayerNode node)
+    {
+        blocks[from].BlockType = BlockType.Twig;
+        BlockInfo newBlock = blocks[to];
+        newBlock.SetPlayerNode(node);
+        newBlock.BlockType = BlockType.Leaf;
+        generator.GenerateLine(to.y - 10);
     }
 
-    static void SetCurrent(BlockInfo info)
+    // TODO: please Remove
+    public static void setPls(Vector2Int loc, BlockType type)
     {
-        currentBlock?.block.SetToUsed();
-        info.blockType = BlockType.Root;
-        info.block.SetToCurrent();
-        currentBlock = info;
-    }
-
-    static void GenerateAround(Vector2Int location)
-    {
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.down);
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.left);
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.right);
-
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.down * 2);
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.left * 2);
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.right * 2);
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.down + Vector2Int.right);
-        BlockGenerator.I.GenerateBlock(location + Vector2Int.down + Vector2Int.left);
+        blocks[loc].BlockType = type;
     }
 }

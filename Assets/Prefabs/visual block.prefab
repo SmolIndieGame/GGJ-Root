@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2863131977114386197}
   - component: {fileID: 2863131977114386198}
   m_Layer: 0
-  m_Name: block
+  m_Name: visual block
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4498fffbeaa1b3d4887d7dd408f5b744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderer: {fileID: 2863131977978816889}
+  spriteRenderer: {fileID: 2863131977978816889}
   clickedColor: {r: 1, g: 1, b: 0, a: 1}
   usedColor: {r: 0.27450982, g: 0.27450982, b: 0, a: 1}
 --- !u!1 &2863131977978817159

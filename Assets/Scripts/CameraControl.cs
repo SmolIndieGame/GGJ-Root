@@ -6,15 +6,24 @@ public class CameraControl : MonoBehaviour
 {
     [SerializeField]
     private Camera cam;
-    [SerializeField]
-    private float speed;
 
-    void Update()
+    private Vector2 dragOriginPos;
+    private Vector2 startPos;
+
+    public void Record(Vector2 screenPos)
     {
-        float dx = Input.GetAxisRaw("Horizontal");
-        float dy = Input.GetAxisRaw("Vertical");
-        if (Mathf.Approximately(dx, 0) && Mathf.Approximately(dy, 0))
-            return;
-        transform.position += speed * Time.deltaTime * new Vector3(dx, dy);
+        dragOriginPos = cam.ScreenToWorldPoint(screenPos);
+        startPos = transform.position;
+    }
+
+    public void Drag(Vector2 screenPos)
+    {
+        Vector2 worldPos = cam.ScreenToWorldPoint(screenPos);
+        transform.position -= (Vector3)(worldPos - dragOriginPos);
+    }
+
+    public void Scroll(float delta)
+    {
+        cam.orthographicSize = Mathf.Clamp(cam.orthographicSize - delta, 4, 10);
     }
 }

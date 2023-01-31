@@ -5,9 +5,18 @@ using UnityEngine;
 public class ScoreDisplayer : MonoBehaviour
 {
     [SerializeField] TMPro.TMP_Text text;
+    [SerializeField] int playerNumber;
 
-    void Update()
+    void Awake()
     {
-        text.text = BlockGrid.score.ToString();
+        if (playerNumber == 1)
+            PlayerController.p1ScoreChange += ScoreChange;
+        else
+            PlayerController.p2ScoreChange += ScoreChange;
+    }
+
+    private void ScoreChange(float score)
+    {
+        text.text = $"P{playerNumber} Water: {score}";
     }
 }
