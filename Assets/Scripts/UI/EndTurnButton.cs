@@ -8,20 +8,23 @@ public class EndTurnButton : MonoBehaviour
     [SerializeField] Image image;
     [SerializeField] Button button;
 
-    static Color a1 = Color.red;
-    static Color a2 = Color.blue;
-
     private void Start()
     {
-        image.color = a1;
+        image.color = Constants.P1Color;
         button.interactable = false;
         PlayerController.CanEndTurnChange += OnCanEndTurnChange;
-        PlayerController.onEndTurn += OnEndTurn;
+        PlayerController.OnEndTurn += OnEndTurn;
+    }
+
+    private void OnDestroy()
+    {
+        PlayerController.CanEndTurnChange -= OnCanEndTurnChange;
+        PlayerController.OnEndTurn -= OnEndTurn;
     }
 
     private void OnEndTurn(int obj)
     {
-        image.color = obj == 2 ? a2 : a1;
+        image.color = obj == 2 ? Constants.P2Color : Constants.P1Color;
     }
 
     private void OnCanEndTurnChange(bool ableToEndTurn)

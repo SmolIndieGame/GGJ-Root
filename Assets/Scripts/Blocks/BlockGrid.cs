@@ -32,11 +32,8 @@ public class BlockInfo
 
     public void SetPlayerNode(PlayerNode node)
     {
-        if (treeNode == node)
-            return;
         treeNode = node;
-        if (node != null)
-            block.ChangeAlliance(node.Tree.alliance);
+        block.UpdateTreeStructure(node);
     }
 }
 
@@ -52,12 +49,16 @@ public enum BlockType
 
 public static class BlockGrid
 {
+    public const int MapWidth = 18;
+
     static readonly Dictionary<Vector2Int, BlockInfo> blocks = new();
 
     static BlockGenerator generator;
 
     public static void Init(BlockGenerator generator)
     {
+        blocks.Clear();
+
         BlockGrid.generator = generator;
         //for (int i = 0; i < 18; i++)
         //{
@@ -88,33 +89,37 @@ public static class BlockGrid
     public static void SetTwigToLeaf(Vector2Int loc)
     {
         BlockInfo info = blocks[loc];
-        if (info.BlockType == BlockType.Twig)
-            info.BlockType = BlockType.Leaf;
+        if (info.BlockType != BlockType.Twig)
+            return;
+        info.BlockType = BlockType.Leaf;
     }
     public static void SetLeafToTwig(Vector2Int loc)
     {
         BlockInfo info = blocks[loc];
-        if (info.BlockType == BlockType.Leaf)
-            info.BlockType = BlockType.Twig;
+        if (info.BlockType != BlockType.Leaf)
+            return;
+        info.BlockType = BlockType.Twig;
     }
     public static void SetTreeBlockToDirt(Vector2Int loc)
     {
         BlockInfo info = blocks[loc];
         info.SetPlayerNode(null);
-        if (info.BlockType == BlockType.Leaf || info.BlockType == BlockType.Twig)
-            info.BlockType = BlockType.Dirt;
+        if (info.BlockType != BlockType.Leaf && info.BlockType != BlockType.Twig)
+            return;
+        info.BlockType = BlockType.Dirt;
     }
     public static void ExtendLeaf(Vector2Int from, Vector2Int to, PlayerNode node)
     {
-        blocks[from].BlockType = BlockType.Twig;
-        BlockInfo newBlock = blocks[to];
-        newBlock.SetPlayerNode(node);
-        newBlock.BlockType = BlockType.Leaf;
-        generator.GenerateLine(to.y - 10);
+        BlockInfo fromBlock = blocks[from];
+        fromBlock.BlockType = BlockType.Twig;
+
+        BlockInfo toBlock = blocks[to];
+        toBlock.SetPlayerNode(node);
+        toBlock.BlockType = BlockType.Leaf;
+        generator.GenerateLine(to.y - 8);
     }
 
-    // TODO: please Remove
-    public static void setPls(Vector2Int loc, BlockType type)
+    public static void SetBlockType(Vector2Int loc, BlockType type)
     {
         blocks[loc].BlockType = type;
     }

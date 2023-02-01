@@ -10,9 +10,17 @@ public class ScoreDisplayer : MonoBehaviour
     void Awake()
     {
         if (playerNumber == 1)
-            PlayerController.p1ScoreChange += ScoreChange;
+            PlayerController.P1ScoreChange += ScoreChange;
         else
-            PlayerController.p2ScoreChange += ScoreChange;
+            PlayerController.P2ScoreChange += ScoreChange;
+    }
+
+    private void OnDestroy()
+    {
+        if (playerNumber == 1)
+            PlayerController.P1ScoreChange -= ScoreChange;
+        else
+            PlayerController.P2ScoreChange -= ScoreChange;
     }
 
     private void ScoreChange(float score)

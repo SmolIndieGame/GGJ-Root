@@ -4,9 +4,8 @@ using UnityEngine;
 
 public class BlockGenerator : MonoBehaviour
 {
-    const int MapWidth = 18;
-    const int Area1Height = 12;
-    const int Area2Height = 12;
+    const int Area1Height = 9;
+    const int Area2Height = 8;
 
     [SerializeField] GameObject blockPf;
 
@@ -15,8 +14,8 @@ public class BlockGenerator : MonoBehaviour
 
     Vector2 noiseOffset;
 
-    bool[,] waterLoc = new bool[MapWidth, Area1Height + Area2Height];
-    int currentHeight;
+    bool[,] waterLoc = new bool[BlockGrid.MapWidth, Area1Height + Area2Height];
+    public int CurrentHeight { get; private set; }
 
     //private void OnValidate()
     //{
@@ -26,32 +25,35 @@ public class BlockGenerator : MonoBehaviour
 
     private void Start()
     {
-        for (int i = 0; i < MapWidth / 3; i++)
+        for (int i = 0; i < BlockGrid.MapWidth / 3; i++)
             for (int j = 0; j < Area1Height / 3; j++)
                 waterLoc[i * 3 + Random.Range(0, 3), j * 3 + Random.Range(0, 3)] = true;
 
-        for (int i = 0; i < MapWidth / 4; i++)
+        for (int i = 0; i < BlockGrid.MapWidth / 4; i++)
             for (int j = 0; j < Area2Height / 4; j++)
-                waterLoc[i * 4 + Random.Range(0, 4) + MapWidth % 4 / 2, j * 4 + Random.Range(0, 4) + Area1Height] = true;
+                waterLoc[i * 4 + Random.Range(0, 4) + (i >= BlockGrid.MapWidth / 8 ? BlockGrid.MapWidth % 4 : 0), j * 4 + Random.Range(0, 4) + Area1Height] = true;
 
-        currentHeight = Area1Height + Area2Height;
-        for (int i = 0; i < MapWidth; i++)
-            for (int j = 0; j < currentHeight; j++)
+        BlockGrid.Init(this);
+
+        CurrentHeight = 5;
+        for (int i = 0; i < BlockGrid.MapWidth; i++)
+            for (int j = 0; j < CurrentHeight; j++)
                 GenerateBlock(new Vector2Int(i, -j));
 
         noiseOffset.x = Random.Range(-1000f, 1000f);
         noiseOffset.y = Random.Range(-1000f, 1000f);
 
-        BlockGrid.Init(this);
         PlayerController.Init();
+
+        AudioManager.I.Play("Battle");
     }
 
     public void GenerateLine(int y)
     {
-        for (; currentHeight < -y; currentHeight++)
+        for (; CurrentHeight < -y; CurrentHeight++)
         {
-            for (int i = 0; i < MapWidth; i++)
-                GenerateBlock(new Vector2Int(i, -currentHeight));
+            for (int i = 0; i < BlockGrid.MapWidth; i++)
+                GenerateBlock(new Vector2Int(i, -CurrentHeight));
         }
     }
 
@@ -61,7 +63,9 @@ public class BlockGenerator : MonoBehaviour
             return;
 
         BlockType blockType;
-        if (-location.y < Area1Height + Area2Height && waterLoc[location.x, -location.y])
+        if (location.y == 0 || PlayerController.deepWaterLocations.Contains(location))
+            blockType = BlockType.Dirt;
+        else if (-location.y < Area1Height + Area2Height && waterLoc[location.x, -location.y])
             blockType = BlockType.Water;
         else
         {
@@ -69,7 +73,7 @@ public class BlockGenerator : MonoBehaviour
             if (f < threshold)
                 blockType = BlockType.Dirt;
             else
-                blockType = BlockType.Rock;
+                blockType = location.y > -2 ? BlockType.Dirt : BlockType.Rock;
         }
 
         //if (BlockGrid.Contains(location))

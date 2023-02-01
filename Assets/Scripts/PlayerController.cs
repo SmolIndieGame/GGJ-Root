@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public static class PlayerController
@@ -8,25 +6,29 @@ public static class PlayerController
     const float InitialPenalty = 4;
     const float PenaltyMultiplier = 2;
     const float InitialScore = 20;
+    const int PlayerStartX = 5;
 
     static PlayerTree p1;
     static PlayerTree p2;
 
-    static PlayerTree current;
-
+    public static readonly List<Vector2Int> deepWaterLocations = new();
+    public static readonly List<Vector2Int> victoryLocations = new();
+    
     #region Fields For Handling Turns
+    static PlayerTree current;
     static PlayerNode touchingLeaf;
-    static Dictionary<Vector2Int, (float changeScore, PlayerNode enemyNode)> growableLocs = new();
+    static readonly Dictionary<Vector2Int, (float changeScore, PlayerNode enemyNode)> growableLocs = new();
     static bool branching;
     static float costPenalty;
     #endregion
 
     public static VisualGuider visualGuider { private get; set; }
 
-    public static event System.Action<float> p1ScoreChange;
-    public static event System.Action<float> p2ScoreChange;
+    public static event System.Action<float> P1ScoreChange;
+    public static event System.Action<float> P2ScoreChange;
     public static event System.Action<bool> CanEndTurnChange;
-    public static event System.Action<int> onEndTurn;
+    public static event System.Action<int> OnEndTurn;
+    public static event System.Action<int> OnGameOver;
 
     public static void Init()
     {
@@ -40,19 +42,22 @@ public static class PlayerController
             twig = new Color32(0, 0, 150, 255),
             leaf = new Color32(0, 0, 255, 255)
         };
-        p1 = new PlayerTree(new Vector2Int(3, 0), InitialScore, p1Color);
-        p2 = new PlayerTree(new Vector2Int(14, 0), InitialScore, p2Color);
+        p1 = new PlayerTree(new Vector2Int(PlayerStartX, 0), InitialScore, p1Color);
+        p2 = new PlayerTree(new Vector2Int(BlockGrid.MapWidth - PlayerStartX - 1, 0), InitialScore, p2Color);
 
-        var tmpLoc = new Vector2Int(3, 0);
+        var tmpLoc = new Vector2Int(PlayerStartX, 0);
         BlockGrid.ExtendLeaf(tmpLoc, tmpLoc, p1.Root);
-        tmpLoc = new Vector2Int(14, 0);
+        tmpLoc = new Vector2Int(BlockGrid.MapWidth - PlayerStartX - 1, 0);
         BlockGrid.ExtendLeaf(tmpLoc, tmpLoc, p2.Root);
 
         current = p1;
         touchingLeaf = null;
+        growableLocs.Clear();
+        branching = false;
+        costPenalty = 0;
 
-        p1ScoreChange?.Invoke(p1.score);
-        p2ScoreChange?.Invoke(p2.score);
+        P1ScoreChange?.Invoke(p1.score);
+        P2ScoreChange?.Invoke(p2.score);
     }
 
     public static void EndCurrentPlayerTurn()
@@ -62,29 +67,34 @@ public static class PlayerController
         if (touchingLeaf != null)
             Cancel();
 
-        // TODO: Please do not hard code.
-        DominationReward(new Vector2Int(8, -17));
-        DominationReward(new Vector2Int(8, -18));
-        DominationReward(new Vector2Int(9, -17));
-        DominationReward(new Vector2Int(9, -18));
+        foreach (var loc in deepWaterLocations)
+            DominationReward(loc);
 
         if (p1 == current)
-            p1ScoreChange?.Invoke(current.score);
+            P1ScoreChange?.Invoke(current.score);
         else
-            p2ScoreChange?.Invoke(current.score);
+            P2ScoreChange?.Invoke(current.score);
 
         current = current == p1 ? p2 : p1;
         costPenalty = 0;
         CanEndTurnChange?.Invoke(false);
-        onEndTurn?.Invoke(current == p1 ? 1 : 2);
+        OnEndTurn?.Invoke(current == p1 ? 1 : 2);
     }
 
     static void DominationReward(Vector2Int loc)
     {
-        if (!IsAlly(loc))
+        if (!BlockGrid.Contains(loc) || !IsAlly(loc))
             return;
 
         current.score++;
+    }
+
+    static void VictoryDetection(Vector2Int loc)
+    {
+        if (!BlockGrid.Contains(loc) || !IsAlly(loc))
+            return;
+
+        OnGameOver?.Invoke(current == p1 ? 1 : 2);
     }
 
     public static void Click(Vector2Int loc)
@@ -130,15 +140,26 @@ public static class PlayerController
 
         // Add support for more than 2 players
         if (p1 == current)
-            p1ScoreChange?.Invoke(current.score);
+            P1ScoreChange?.Invoke(current.score);
         else
-            p2ScoreChange?.Invoke(current.score);
+            P2ScoreChange?.Invoke(current.score);
         CanEndTurnChange?.Invoke(true);
 
         touchingLeaf = null;
         branching = false;
         growableLocs.Clear();
         visualGuider.RemoveAllGuide();
+
+        if (current.score < 0)
+            OnGameOver?.Invoke(current == p1 ? 2 : 1);
+
+        foreach (var item in victoryLocations)
+            VictoryDetection(item);
+
+        if (changes.enemyNode == p1.Root)
+            OnGameOver?.Invoke(2);
+        if (changes.enemyNode == p2.Root)
+            OnGameOver?.Invoke(1);
     }
 
     static void DestroySubTree(PlayerNode node)
@@ -147,12 +168,13 @@ public static class PlayerController
             return;
         if (node.Parent != null)
         {
-            if (node.Parent.ChildrenCount == 1)
+            node.Parent.RemoveChild(node);
+            BlockGrid.SetBlockType(node.Parent.Location, BlockGrid.GetType(node.Parent.Location));
+            if (node.Parent.ChildrenCount == 0)
             {
                 node.Tree.NewLeaf(node.Parent);
                 BlockGrid.SetTwigToLeaf(node.Parent.Location);
             }
-            node.Parent.RemoveChild(node);
         }
 
         DestroyRecursive(node);
@@ -218,21 +240,27 @@ public static class PlayerController
         if (IsEnemy(to))
             changes.enemyNode = BlockGrid.GetTreeNode(to);
         for (Vector2Int leftOrRight = Vector2Int.left; leftOrRight.x < 2; leftOrRight.x += 2)
-            if (from == to + Vector2Int.up + leftOrRight
-                && (BlockGrid.GetType(to + Vector2Int.up) != BlockType.Leaf
-                || BlockGrid.GetType(to + leftOrRight) != BlockType.Leaf))
-            {
-                if (IsAlly(to + Vector2Int.up) && IsAlly(to + leftOrRight))
-                    return false;
-                if (IsEnemy(to + Vector2Int.up) && IsEnemy(to + leftOrRight))
-                    changes.enemyNode = BlockGrid.GetTreeNode(to + leftOrRight);
-            }
+        {
+            if (from != to + Vector2Int.up + leftOrRight)
+                continue;
+            PlayerNode upNode = BlockGrid.GetTreeNode(to + Vector2Int.up);
+            PlayerNode horizontalNode = BlockGrid.GetTreeNode(to + leftOrRight);
+            if (upNode == null || upNode != horizontalNode?.Parent)
+                continue;
+
+            if (IsAlly(to + Vector2Int.up))
+                return false;
+            if (IsEnemy(to + Vector2Int.up))
+                changes.enemyNode = horizontalNode;
+        }
 
         changes.changeScore = GetChangeScore(to);
-        if (float.IsNaN(changes.changeScore) || current.score + changes.changeScore < 0)
+        if (float.IsNaN(changes.changeScore))
             return false;
         return true;
     }
+
+    public static float GetCurrentScore() => current.score;
 
     static float GetChangeScore(Vector2Int loc)
     {

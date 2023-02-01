@@ -4,16 +4,24 @@ using UnityEngine;
 
 public class CameraControl : MonoBehaviour
 {
-    [SerializeField]
-    private Camera cam;
+    public static CameraControl I { get; private set; }
+
+    [SerializeField] Camera cam;
+    [SerializeField] Transform shaker;
 
     private Vector2 dragOriginPos;
-    private Vector2 startPos;
+
+    float currentShakeIntensity;
+    float currentShakeDuration;
+
+    private void Awake()
+    {
+        I = this;
+    }
 
     public void Record(Vector2 screenPos)
     {
         dragOriginPos = cam.ScreenToWorldPoint(screenPos);
-        startPos = transform.position;
     }
 
     public void Drag(Vector2 screenPos)
@@ -24,6 +32,26 @@ public class CameraControl : MonoBehaviour
 
     public void Scroll(float delta)
     {
-        cam.orthographicSize = Mathf.Clamp(cam.orthographicSize - delta, 4, 10);
+        cam.orthographicSize = Mathf.Clamp(cam.orthographicSize - delta, 2.5f, 10);
+    }
+
+    public void Shake(float intensity, float duration)
+    {
+        if (currentShakeIntensity > intensity)
+            return;
+        currentShakeIntensity = intensity;
+        currentShakeDuration = duration;
+    }
+
+    private void Update()
+    {
+        if (currentShakeIntensity < 0.01f)
+        {
+            currentShakeIntensity = 0;
+            return;
+        }
+
+        shaker.localPosition = Random.insideUnitCircle * currentShakeIntensity;
+        currentShakeIntensity *= currentShakeDuration;
     }
 }

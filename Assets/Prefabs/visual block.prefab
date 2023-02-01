@@ -46,9 +46,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4498fffbeaa1b3d4887d7dd408f5b744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spriteRenderer: {fileID: 2863131977978816889}
-  clickedColor: {r: 1, g: 1, b: 0, a: 1}
-  usedColor: {r: 0.27450982, g: 0.27450982, b: 0, a: 1}
+  becomeTwigParticlePf: {fileID: 2830466944861719057, guid: 73a6212b3de39e445aa3c0e7c2e74d04, type: 3}
+  removeTwigParticlePf: {fileID: 2830466944861719057, guid: 73a6212b3de39e445aa3c0e7c2e74d04, type: 3}
+  backGround: {fileID: 2863131977978816889}
+  lightPf: {fileID: 3842499262226341991, guid: 29e18dcbc39f0454583a07e91f216639, type: 3}
+  grass: {fileID: 21300000, guid: 68427838431557748ac66f2e428a04b2, type: 3}
+  dirt1: {fileID: 21300000, guid: 67216b041ef62d7438cbe05e89fae566, type: 3}
+  dirt2: {fileID: 21300000, guid: bd996cb2b31fe3849909e9eea61b3f5e, type: 3}
+  rock: {fileID: 21300000, guid: 0495c45d9a11a0548ac640e4a642b523, type: 3}
+  water: {fileID: 21300000, guid: 49cd0ba0c52566d47a1a36e5d1240af2, type: 3}
 --- !u!1 &2863131977978817159
 GameObject:
   m_ObjectHideFlags: 0
@@ -75,7 +81,7 @@ Transform:
   m_GameObject: {fileID: 2863131977978817159}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.9, y: 0.9, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2863131978529303579}
@@ -121,9 +127,9 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -2
   m_Sprite: {fileID: 7482667652216324306, guid: fd3853b201422a04a86efbdb849a9316, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.92156863, g: 0.92156863, b: 0.92156863, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
