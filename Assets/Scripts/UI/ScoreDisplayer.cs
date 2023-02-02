@@ -23,8 +23,8 @@ public class ScoreDisplayer : MonoBehaviour
             PlayerController.P2ScoreChange -= ScoreChange;
     }
 
-    private void ScoreChange(float score)
+    private void ScoreChange(float score, float endTurn)
     {
-        text.text = $"P{playerNumber} Water: {score}";
+        text.text = $"P{playerNumber} Water: {score}{(endTurn == 0 ? string.Empty : $" +{endTurn}")}";
     }
 }

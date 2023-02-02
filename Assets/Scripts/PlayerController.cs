@@ -24,8 +24,8 @@ public static class PlayerController
 
     public static VisualGuider visualGuider { private get; set; }
 
-    public static event System.Action<float> P1ScoreChange;
-    public static event System.Action<float> P2ScoreChange;
+    public static event System.Action<float, float> P1ScoreChange;
+    public static event System.Action<float, float> P2ScoreChange;
     public static event System.Action<bool> CanEndTurnChange;
     public static event System.Action<int> OnEndTurn;
     public static event System.Action<int> OnGameOver;
@@ -46,8 +46,8 @@ public static class PlayerController
         branching = false;
         costPenalty = 0;
 
-        P1ScoreChange?.Invoke(p1.score);
-        P2ScoreChange?.Invoke(p2.score);
+        P1ScoreChange?.Invoke(p1.score, 0);
+        P2ScoreChange?.Invoke(p2.score, 0);
     }
 
     public static void EndCurrentPlayerTurn()
@@ -57,26 +57,32 @@ public static class PlayerController
         if (touchingLeaf != null)
             Cancel();
 
-        foreach (var loc in deepWaterLocations)
-            DominationReward(loc);
+        current.score += CountDominationReward();
 
         if (p1 == current)
-            P1ScoreChange?.Invoke(current.score);
+            P1ScoreChange?.Invoke(current.score, 0);
         else
-            P2ScoreChange?.Invoke(current.score);
+            P2ScoreChange?.Invoke(current.score, 0);
 
         current = current == p1 ? p2 : p1;
+
+        if (p1 == current)
+            P1ScoreChange?.Invoke(current.score, CountDominationReward());
+        else
+            P2ScoreChange?.Invoke(current.score, CountDominationReward());
+
         costPenalty = 0;
         CanEndTurnChange?.Invoke(false);
         OnEndTurn?.Invoke(current == p1 ? 1 : 2);
     }
 
-    static void DominationReward(Vector2Int loc)
+    static float CountDominationReward()
     {
-        if (!BlockGrid.Contains(loc) || !IsAlly(loc))
-            return;
-
-        current.score++;
+        float ans = 0;
+        foreach (var loc in deepWaterLocations)
+            if (BlockGrid.Contains(loc) && IsAlly(loc))
+                ans++;
+        return ans;
     }
 
     static void VictoryDetection(Vector2Int loc)
@@ -130,9 +136,9 @@ public static class PlayerController
 
         // Add support for more than 2 players
         if (p1 == current)
-            P1ScoreChange?.Invoke(current.score);
+            P1ScoreChange?.Invoke(current.score, CountDominationReward());
         else
-            P2ScoreChange?.Invoke(current.score);
+            P2ScoreChange?.Invoke(current.score, CountDominationReward());
         CanEndTurnChange?.Invoke(true);
 
         touchingLeaf = null;

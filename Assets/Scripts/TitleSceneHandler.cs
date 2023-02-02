@@ -9,4 +9,6 @@ public class TitleSceneHandler : MonoBehaviour
     }
 
     public void LoadToBattle() => SceneManager.LoadScene("Battle");
+
+    public void Quit() => Application.Quit();
 }

@@ -38,6 +38,7 @@ public class GameOverHandler : MonoBehaviour
     private void OnGameOver(int player)
     {
         title.text = $"Player{player} Won!";
+        title.color = player == 1 ? Constants.P1Color : Constants.P2Color;
         gameOverScreen.SetActive(true);
         AudioManager.I.StopAll();
         AudioManager.I.Play("GameOver");

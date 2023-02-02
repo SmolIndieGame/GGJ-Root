@@ -54,7 +54,7 @@ public class AudioManager : MonoBehaviour
     public void Play(string name)
     {
         var data = dataDict[name];
-        if (data.lastTimePlay + playCoolDown > Time.timeAsDouble)
+        if (!data.loop && data.lastTimePlay + playCoolDown > Time.timeAsDouble)
             return;
         var source = gameObject.AddComponent<AudioSource>();
         source.clip = data.audioClip;
