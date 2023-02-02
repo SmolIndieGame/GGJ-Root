@@ -30,18 +30,8 @@ public static class PlayerController
     public static event System.Action<int> OnEndTurn;
     public static event System.Action<int> OnGameOver;
 
-    public static void Init()
+    public static void Init(PlayerTextureSet p1Color, PlayerTextureSet p2Color)
     {
-        var p1Color = new AllianceColor
-        {
-            twig = new Color32(150, 0, 0, 255),
-            leaf = new Color32(255, 0, 0, 255)
-        };
-        var p2Color = new AllianceColor
-        {
-            twig = new Color32(0, 0, 150, 255),
-            leaf = new Color32(0, 0, 255, 255)
-        };
         p1 = new PlayerTree(new Vector2Int(PlayerStartX, 0), InitialScore, p1Color);
         p2 = new PlayerTree(new Vector2Int(BlockGrid.MapWidth - PlayerStartX - 1, 0), InitialScore, p2Color);
 

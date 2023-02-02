@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class VictoryLocations : MonoBehaviour
 {
+    [SerializeField] Transform[] locs;
+
     private void Awake()
     {
         PlayerController.victoryLocations.Clear();
-        foreach (Transform child in transform)
+        foreach (var loc in locs)
         {
-            Vector2Int pos = new((int)child.position.x, (int)child.position.y);
+            Vector2Int pos = new((int)loc.position.x, (int)loc.position.y);
             PlayerController.victoryLocations.Add(pos);
         }
     }

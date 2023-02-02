@@ -30,13 +30,13 @@ public sealed class PlayerNode
 public class PlayerTree
 {
     public float score;
-    public readonly AllianceColor alliance;
+    public readonly PlayerTextureSet alliance;
 
     public PlayerNode Root { get; private set; }
 
     Dictionary<Vector2Int, PlayerNode> leaves;
 
-    public PlayerTree(Vector2Int rootLoc, float score, AllianceColor alliance)
+    public PlayerTree(Vector2Int rootLoc, float score, PlayerTextureSet alliance)
     {
         this.score = score;
         Root = new PlayerNode(this, null, rootLoc);

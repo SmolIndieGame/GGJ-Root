@@ -9,6 +9,12 @@ public class BlockGenerator : MonoBehaviour
 
     [SerializeField] GameObject blockPf;
 
+    // TODO pls do it somewhere else
+    [SerializeField] Sprite topTwig1;
+    [SerializeField] Sprite leftTwig1;
+    [SerializeField] Sprite topTwig2;
+    [SerializeField] Sprite leftTwig2;
+
     [SerializeField] float threshold;
     [SerializeField] float frequency;
 
@@ -43,7 +49,7 @@ public class BlockGenerator : MonoBehaviour
         noiseOffset.x = Random.Range(-1000f, 1000f);
         noiseOffset.y = Random.Range(-1000f, 1000f);
 
-        PlayerController.Init();
+        PlayerController.Init(new() { top = topTwig1, topLeft = leftTwig1 }, new() { top = topTwig2, topLeft = leftTwig2 });
 
         AudioManager.I.Play("Battle");
     }
@@ -63,7 +69,7 @@ public class BlockGenerator : MonoBehaviour
             return;
 
         BlockType blockType;
-        if (location.y == 0 || PlayerController.deepWaterLocations.Contains(location))
+        if (location.y == 0 || PlayerController.deepWaterLocations.Contains(location) || PlayerController.victoryLocations.Contains(location))
             blockType = BlockType.Dirt;
         else if (-location.y < Area1Height + Area2Height && waterLoc[location.x, -location.y])
             blockType = BlockType.Water;

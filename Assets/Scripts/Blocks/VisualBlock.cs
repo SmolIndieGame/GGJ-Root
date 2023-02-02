@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct AllianceColor
+public struct PlayerTextureSet
 {
-    public Color twig;
-    public Color leaf;
+    public Sprite top;
+    public Sprite topLeft;
 }
 
 public class VisualBlock : MonoBehaviour, IClickHandler
@@ -90,33 +90,32 @@ public class VisualBlock : MonoBehaviour, IClickHandler
         if (node.Parent != null)
             parentLoc = node.Parent.Location;
 
-        GenerateTwigAtDirection(parentLoc - node.Location);
+        GenerateTwigAtDirection(parentLoc - node.Location, true);
 
         using var iter = node.GetChildrenEnumerator();
         while (iter.MoveNext())
-            GenerateTwigAtDirection(iter.Current.Location - node.Location);
+            GenerateTwigAtDirection(iter.Current.Location - node.Location, false);
         
         if (childCount > node.ChildrenCount)
             Instantiate(removeTwigParticlePf, (Vector2)location, Quaternion.identity);
         childCount = node.ChildrenCount;
     }
 
-    private void GenerateTwigAtDirection(Vector2Int dir)
+    private void GenerateTwigAtDirection(Vector2Int dir, bool isParent)
     {
         SpriteRenderer obj;
-        if (Mathf.Abs(dir.x) + Mathf.Abs(dir.y) == 1)
+        int dis = Mathf.Abs(dir.x) + Mathf.Abs(dir.y);
+
+        obj = VisualTwigPool.I.Get(transform);
+        obj.sprite = dis == 1 ? node.Tree.alliance.top : node.Tree.alliance.topLeft;
+        obj.transform.up = (Vector2)(isParent ? dir : -dir);
+        if (!isParent)
         {
-            obj = VisualTwigPool.I.Get(transform, TwigType.TopOnly);
-            obj.transform.up = (Vector2)dir;
-            //if (obj.transform.eulerAngles.z == 180)
-            //    obj.transform.localScale = new Vector3(1, -1, 1);
+            obj.transform.position -= 0.25f * dis * obj.transform.up;
+            obj.transform.localScale = new Vector3(-1, 1, 1);
         }
-        else
-        {
-            obj = VisualTwigPool.I.Get(transform, TwigType.TopLeftOnly);
-            obj.transform.up = (Vector2)dir;
-            obj.transform.Rotate(0, 0, -45);
-        }
+        if (dis == 2)
+            obj.transform.Rotate(0, 0, isParent ? -45 : 45);
 
         inUseTwigs.Add(obj);
     }
